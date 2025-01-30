@@ -1,0 +1,38 @@
+# Python virtual environment
+venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Database and vector stores
+academic_db/
+academic_papers/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+
+# Test cache and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+tests/__pycache__/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Model files and artifacts
+*.pkl
+*.bin
+*.pt
+*.pth
+*.onnx

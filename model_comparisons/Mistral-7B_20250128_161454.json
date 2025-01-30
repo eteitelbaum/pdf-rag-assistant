@@ -1,0 +1,7 @@
+{
+  "model": "Mistral-7B",
+  "query": "Can you tell me three major themes fo the litre on private governance as it applies to labor standards?out to you... Meaning, which ones stand out to you and whyy?",
+  "error": "BFloat16 is not supported on MPS",
+  "timestamp": "2025-01-28T16:14:54.381417",
+  "success": false
+}
