@@ -9,19 +9,21 @@ einops>=0.7.0
 scipy>=1.11.0
 sentencepiece>=0.1.99
 
-# LangChain and vector store
-langchain>=0.0.350
-langchain-community>=0.0.10
-langchain-huggingface
+# LangChain dependencies - updated versions
+langchain==0.1.0  # Specific version to avoid conflicts
+langchain-community==0.0.10  # Match with langchain version
+langchain-huggingface==0.0.1  # Base version
+
+# Vector store
 chromadb==0.4.24
 sentence-transformers==2.5.1
 
-# Document processing
+# PDF processing
 pypdf==4.1.0
 
-# LLM APIs
+# API clients
 openai==1.14.0
-anthropic>=0.41.0,<1.0.0
+anthropic>=0.41.0
 
 # Utilities
 pandas==2.2.1
