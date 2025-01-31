@@ -4,14 +4,9 @@ Academic RAG System
 A modular system for analyzing academic papers using RAG.
 """
 
-from .models import LLMRouter, AcademicDatabaseConnector
-from .document_processing import PDFProcessor, VectorStoreManager
-from .utils import MetricsTracker
+from .models.llm_router import LLMRouter
+from .document_processing.vectorstore import VectorStoreManager
+from .utils.document_loader import process_documents
+from .utils.metrics import track_resources
 
-__all__ = [
-    'LLMRouter',
-    'AcademicDatabaseConnector',
-    'PDFProcessor',
-    'VectorStoreManager',
-    'MetricsTracker'
-]
+__all__ = ['LLMRouter', 'VectorStoreManager', 'process_documents', 'track_resources']
