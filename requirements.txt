@@ -9,14 +9,13 @@ einops>=0.7.0
 scipy>=1.11.0
 sentencepiece>=0.1.99
 
-# LangChain dependencies - updated versions
-langchain==0.1.0  # Specific version to avoid conflicts
-langchain-community==0.0.10  # Match with langchain version
-langchain-huggingface==0.0.1  # Base version
+# LangChain dependencies
+langchain==0.1.0
+langchain-community==0.0.10
 
 # Vector store
 chromadb==0.4.24
-sentence-transformers==2.5.1
+sentence-transformers>=2.6.0
 
 # PDF processing
 pypdf==4.1.0
