@@ -79,7 +79,9 @@ class LLMRouter:
     
     def generate_response(self, query, relevant_docs):
         try:
-            # Handle document format safely
+            # Debug print to see what documents we're getting
+            print("\nNumber of relevant docs:", len(relevant_docs))
+            
             doc_texts = []
             for doc in relevant_docs:
                 if isinstance(doc, str):
@@ -89,7 +91,10 @@ class LLMRouter:
                 else:
                     print(f"Warning: Skipping document with unexpected format: {type(doc)}")
             
+            # Debug print the first bit of context
             context = "\n\n".join(doc_texts[:3])
+            print("\nFirst 200 chars of context:")
+            print(context[:200])
             
             prompt = f"""Based on the following academic literature excerpts, {query}
 
@@ -97,6 +102,8 @@ Context:
 {context}
 
 Response:"""
+            
+            print("\nPrompt length:", len(prompt))
             
             # Generate with explicit truncation settings
             inputs = self.tokenizer(
