@@ -5,6 +5,7 @@ from langchain_community.vectorstores import Chroma
 from transformers import AutoTokenizer, AutoModel
 import torch
 import numpy as np
+import os
 
 class HuggingFaceEmbeddings:
     def __init__(self, model_name="BAAI/bge-large-en-v1.5"):
@@ -25,7 +26,7 @@ class HuggingFaceEmbeddings:
         
         # Convert numpy arrays to lists
         return [embedding.tolist() for embedding in embeddings]
-        
+    
     def embed_query(self, text: str):
         """Embed a single piece of text (the query)"""
         return self.embed_documents([text])[0]
@@ -90,20 +91,20 @@ class VectorStoreManager:
         except Exception:
             return None
     
-    def get_or_create_vectorstore(self, documents: List[Document]) -> Chroma:
-        """
-        Load existing vector store or create new one.
-        
-        Args:
-            documents: List of document chunks to store if creating new
-            
-        Returns:
-            Chroma: Vector store instance
-        """
-        existing_store = self.load_existing_vectorstore()
-        if existing_store is not None:
+    def get_or_create_vectorstore(self, documents: Optional[List[Document]] = None):
+        if os.path.exists(self.persist_directory):
             print("\nLoading existing vector database...")
-            return existing_store
+            vectorstore = Chroma(
+                persist_directory=self.persist_directory,
+                embedding_function=self.embeddings
+            )
+            # Verify database content
+            doc_count = vectorstore._collection.count()
+            print("\nVerifying vector database:")
+            print(f"Database location: {self.persist_directory}")
+            print(f"Number of documents: {doc_count}")
+            
+            return vectorstore
         
         print("\nNo existing database found. Creating new vector database...")
         return self.initialize_vectorstore(documents)
