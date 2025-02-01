@@ -13,13 +13,6 @@ import psutil
 class LLMRouter:
     """Handles LLM initialization and routing"""
     
-    def __init__(self, llm_type="local", llm_name="mistralai/Mistral-7B-Instruct-v0.3"):
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"Using device: {self.device}")
-        
-        # Initialize model with explicit truncation settings
-        self.model, self.tokenizer = self._initialize_llm(llm_type, llm_name)
-    
     def _verify_hf_token(self):
         """Verify HuggingFace token is valid."""
         try:
@@ -37,6 +30,18 @@ class LLMRouter:
             if isinstance(e, HfHubHTTPError):
                 print(f"HuggingFace Error: {e.response.text}")
             return False
+    
+    def __init__(self, llm_type="local", llm_name="mistralai/Mistral-7B-Instruct-v0.3"):
+        load_dotenv()  # Add this to load .env file
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        print(f"Using device: {self.device}")
+        
+        # Verify token before initializing model
+        if not self._verify_hf_token():
+            raise ValueError("Invalid or missing HuggingFace token")
+        
+        # Initialize model with explicit truncation settings
+        self.model, self.tokenizer = self._initialize_llm(llm_type, llm_name)
     
     def _initialize_llm(self, llm_type="local", llm_name="mistralai/Mistral-7B-Instruct-v0.3"):
         print(f"Attempting to load model: {llm_name}")
