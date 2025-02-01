@@ -39,46 +39,17 @@ def main():
         
         # Initialize components
         pdf_processor = PDFProcessor()
-        vector_manager = VectorStoreManager(persist_directory=args.db_dir)  
+        vector_manager = VectorStoreManager(persist_directory=args.db_dir)
         metrics = MetricsTracker()
-        
-        print("\n=== Step 1: Processing Documents ===")
-        print("\nProcessing PDF documents...")
-        documents = pdf_processor.process_directory(args.pdf_dirs)
-        
-        # Use VectorStoreManager directly
-        vectorstore = vector_manager.get_or_create_vectorstore(documents)
-        print("Document processing complete!")
-        
-        print("\n=== Step 2: Loading Language Model ===")
-        # 2. Then initialize the LLM
         router = LLMRouter()
         
-        print("\n=== Step 3: Ready for Queries ===")
+        print("\n=== Processing Documents ===")
+        documents = pdf_processor.process_directory(args.pdf_dirs)
         
-        # 3. After this, queries will be fast because:
-        #    - Documents are already processed
-        #    - Embeddings are stored in vectorstore
-        #    - Model is loaded in memory
+        # Get or create vectorstore
+        vectorstore = vector_manager.get_or_create_vectorstore(documents)
         
-        # Resource tracking with error handling
-        resources = {
-            'memory_used_mb': psutil.Process().memory_info().rss / (1024 * 1024),
-            'memory_percent': psutil.virtual_memory().percent,
-            'cpu_percent': psutil.cpu_percent(),
-        }
-
-        print("\nSystem Resources:")
-        print(f"Available Memory: {psutil.virtual_memory().available / (1024**3):.1f} GB")
-        print(f"CPU Cores: {psutil.cpu_count()}")
-
-        print("\nResource Usage After Processing:")
-        print(f"Memory Used: {resources.get('memory_used_mb', 0):.1f} MB")
-        print(f"Memory Usage: {resources.get('memory_percent', 0):.1f}%")
-        print(f"CPU Usage: {resources.get('cpu_percent', 0):.1f}%")
-        
-        # Interactive query loop
-        print("\nPDF RAG System Ready!")
+        print("\nDF RAG System Ready!")
         print("Enter your questions about labor and human rights compliance in global supply chains.")
         print("Type 'exit' to quit.\n")
         
@@ -86,34 +57,26 @@ def main():
             query = input("\nEnter your question: ")
             if query.lower() == 'exit':
                 break
+                
+            print("\nProcessing your query...")
             
-            print("\nProcessing your query...\n")
+            # Use vectorstore directly for search
+            relevant_docs = vectorstore.similarity_search(query, k=3)
             
-            # Get relevant documents
-            relevant_docs = vector_manager.similarity_search(vectorstore, query)
+            # Debug print
+            print(f"\nFound {len(relevant_docs)} relevant documents")
             
-            # Generate response
             result = metrics.track_query(
                 "Mistral-7B",
                 query,
                 lambda: router.generate_response(query, relevant_docs).strip()
             )
             
-            # Track resources
-            resources = metrics.track_system_resources()
+            print(f"\nAnswer: {result}")
+            metrics.print_metrics()
             
-            # Display results
-            if 'response' in result:
-                print("\nAnswer:", result['response'])
-            else:
-                print("\nError:", result.get('error', 'Unknown error occurred'))
-            
-            print_metrics(result, resources)
-        
-        return 0
-
     except Exception as e:
-        print(f"Error tracking resources: {str(e)}")
+        print(f"Error: {str(e)}")
 
 def print_metrics(result, resources):
     try:
