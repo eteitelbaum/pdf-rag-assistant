@@ -55,6 +55,8 @@ class LLMRouter:
                 llm_name,
                 token=hf_token
             )
+            # Set padding token
+            tokenizer.pad_token = tokenizer.eos_token
             print("Tokenizer initialized successfully")
             
             # Initialize model
