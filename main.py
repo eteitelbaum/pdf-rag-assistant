@@ -21,8 +21,7 @@ from src import (
     LLMRouter,
     PDFProcessor,
     VectorStoreManager,
-    MetricsTracker,
-    VectorStore
+    MetricsTracker
 )
 
 def setup_directories():
