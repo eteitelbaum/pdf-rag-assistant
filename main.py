@@ -17,6 +17,7 @@ The system will:
 
 import os
 import psutil
+import argparse
 from src import (
     LLMRouter,
     PDFProcessor,
@@ -44,6 +45,14 @@ def create_vectorstore(documents, db_dir):
 
 def main():
     """Main execution function"""
+    # Add argument parsing
+    parser = argparse.ArgumentParser(description='PDF RAG Assistant')
+    parser.add_argument('--pdf_dirs', type=str, default='documents',
+                      help='Directory containing PDF documents')
+    parser.add_argument('--db_dir', type=str, default='vector_db',
+                      help='Directory for vector database')
+    args = parser.parse_args()
+    
     try:
         print("Initializing PDF RAG Assistant...")
         
@@ -54,7 +63,7 @@ def main():
         
         print("\n=== Step 1: Processing Documents ===")
         print("\nProcessing PDF documents...")
-        documents = pdf_processor.process_directory("documents")
+        documents = pdf_processor.process_directory(args.pdf_dirs) 
         vectorstore = vector_manager.get_or_create_vectorstore(documents)
         print("Document processing complete!")
         

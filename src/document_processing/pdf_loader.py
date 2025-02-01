@@ -74,7 +74,7 @@ class PDFProcessor:
     
     def process_directory(self, pdf_directory: str) -> List[Document]:
         """
-        Process all PDFs in a directory.
+        Process all PDFs in a directory - load and split into chunks.
         
         Args:
             pdf_directory: Path to directory containing PDFs
@@ -82,5 +82,8 @@ class PDFProcessor:
         Returns:
             List[Document]: List of processed and split document chunks
         """
+        # First load the PDFs
         documents = self.load_pdfs(pdf_directory)
+        
+        # Then split them into chunks
         return self.split_documents(documents)
