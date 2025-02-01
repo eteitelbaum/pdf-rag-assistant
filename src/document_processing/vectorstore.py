@@ -2,13 +2,33 @@ from typing import List, Optional
 from tqdm import tqdm
 from langchain.schema import Document
 from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import SentenceTransformerEmbeddings
+from transformers import AutoTokenizer, AutoModel
+import torch
+
+class HuggingFaceEmbeddings:
+    def __init__(self, model_name="BAAI/bge-large-en-v1.5"):
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModel.from_pretrained(model_name)
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.model.to(self.device)
+    
+    def embed_documents(self, texts):
+        # Tokenize and encode
+        encoded = self.tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
+        encoded.to(self.device)
+        
+        # Generate embeddings
+        with torch.no_grad():
+            outputs = self.model(**encoded)
+            embeddings = outputs.last_hidden_state[:, 0, :].cpu().numpy()
+        
+        return embeddings
 
 class VectorStoreManager:
     """Manages vector database operations and embeddings"""
     
     def __init__(self, 
-                 embedding_model: str = "all-MiniLM-L6-v2",
+                 embedding_model: str = "BAAI/bge-large-en-v1.5",
                  persist_directory: str = "./academic_db"):
         """
         Initialize the vector store manager.
@@ -17,9 +37,7 @@ class VectorStoreManager:
             embedding_model: Name of the sentence transformer model
             persist_directory: Directory to store the vector database
         """
-        self.embeddings = SentenceTransformerEmbeddings(
-            model_name=embedding_model
-        )
+        self.embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
         self.persist_directory = persist_directory
     
     def initialize_vectorstore(self, documents: List[Document]) -> Chroma:
