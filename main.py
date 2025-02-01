@@ -36,7 +36,8 @@ def create_vectorstore(documents, db_dir):
         os.makedirs(db_dir, exist_ok=True)
         
         print(f"\nCreating vector database in: {db_dir}")
-        vectorstore = VectorStore(documents, db_dir)
+        vector_manager = VectorStoreManager(persist_directory=db_dir)
+        vectorstore = vector_manager.get_or_create_vectorstore(documents)
         return vectorstore
         
     except Exception as e:
