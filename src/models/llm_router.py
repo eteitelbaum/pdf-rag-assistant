@@ -20,7 +20,6 @@ class LLMRouter:
             if not token:
                 raise ValueError("No HuggingFace token found in environment")
             api = HfApi(token=token)
-            # Try to get user info - this will fail if token is invalid
             api.whoami()
             return True
         except Exception as e:
@@ -32,7 +31,7 @@ class LLMRouter:
             return False
     
     def __init__(self, llm_type="local", llm_name="mistralai/Mistral-7B-Instruct-v0.3"):
-        load_dotenv()  # Add this to load .env file
+        load_dotenv()
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"Using device: {self.device}")
         
@@ -48,28 +47,32 @@ class LLMRouter:
         print(f"Using device: {self.device}")
         
         try:
-            # Initialize tokenizer with explicit settings
+            hf_token = os.getenv('HUGGINGFACEHUB_API_TOKEN')
+            
+            # Initialize tokenizer
+            print("\nStep 1: Initializing tokenizer...")
             tokenizer = AutoTokenizer.from_pretrained(
                 llm_name,
-                trust_remote_code=True,
-                truncation=True,
-                padding_side="left",
-                model_max_length=2048
+                token=hf_token
             )
-            tokenizer.pad_token = tokenizer.eos_token
+            print("Tokenizer initialized successfully")
             
-            # Initialize model with flexible dtype
+            # Initialize model
+            print("\nStep 2: Loading model...")
             model = AutoModelForCausalLM.from_pretrained(
                 llm_name,
                 device_map="auto",
-                torch_dtype="auto",  # flexible dtype
-                trust_remote_code=True,
-                low_cpu_mem_usage=True
+                torch_dtype=torch.float16,
+                token=hf_token
             )
+            print("Model loaded successfully")
             
             return model, tokenizer
             
         except Exception as e:
+            print(f"\nDetailed error information:")
+            print(f"Error type: {type(e).__name__}")
+            print(f"Error message: {str(e)}")
             raise ValueError(f"Error initializing model: {str(e)}")
     
     def generate_response(self, query, relevant_docs):

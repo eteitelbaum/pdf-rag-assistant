@@ -25,28 +25,8 @@ from src import (
     MetricsTracker
 )
 
-def setup_directories():
-    """Create necessary directories if they don't exist"""
-    os.makedirs("documents", exist_ok=True)
-    os.makedirs("vector_db", exist_ok=True)
-
-def create_vectorstore(documents, db_dir):
-    try:
-        # Create directory if it doesn't exist
-        os.makedirs(db_dir, exist_ok=True)
-        
-        print(f"\nCreating vector database in: {db_dir}")
-        vector_manager = VectorStoreManager(persist_directory=db_dir)
-        vectorstore = vector_manager.get_or_create_vectorstore(documents)
-        return vectorstore
-        
-    except Exception as e:
-        print(f"Error creating vector database: {str(e)}")
-        return None
-
 def main():
     """Main execution function"""
-    # Add argument parsing
     parser = argparse.ArgumentParser(description='PDF RAG Assistant')
     parser.add_argument('--pdf_dirs', type=str, default='documents',
                       help='Directory containing PDF documents')
@@ -57,14 +37,16 @@ def main():
     try:
         print("Initializing PDF RAG Assistant...")
         
-        # Initialize components first
+        # Initialize components
         pdf_processor = PDFProcessor()
-        vector_manager = VectorStoreManager()
+        vector_manager = VectorStoreManager(persist_directory=args.db_dir)  
         metrics = MetricsTracker()
         
         print("\n=== Step 1: Processing Documents ===")
         print("\nProcessing PDF documents...")
-        documents = pdf_processor.process_directory(args.pdf_dirs) 
+        documents = pdf_processor.process_directory(args.pdf_dirs)
+        
+        # Use VectorStoreManager directly
         vectorstore = vector_manager.get_or_create_vectorstore(documents)
         print("Document processing complete!")
         
