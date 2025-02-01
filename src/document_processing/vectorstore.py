@@ -4,6 +4,7 @@ from langchain.schema import Document
 from langchain_community.vectorstores import Chroma
 from transformers import AutoTokenizer, AutoModel
 import torch
+import numpy as np
 
 class HuggingFaceEmbeddings:
     def __init__(self, model_name="BAAI/bge-large-en-v1.5"):
@@ -22,11 +23,11 @@ class HuggingFaceEmbeddings:
             outputs = self.model(**encoded)
             embeddings = outputs.last_hidden_state[:, 0, :].cpu().numpy()
         
-        return embeddings
+        # Convert numpy arrays to lists
+        return [embedding.tolist() for embedding in embeddings]
         
     def embed_query(self, text: str):
         """Embed a single piece of text (the query)"""
-        # Convert single text to list for processing
         return self.embed_documents([text])[0]
 
 class VectorStoreManager:
