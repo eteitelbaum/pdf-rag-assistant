@@ -108,19 +108,23 @@ class VectorStoreManager:
         print("\nNo existing database found. Creating new vector database...")
         return self.initialize_vectorstore(documents)
     
-    def similarity_search(self, 
-                         vectorstore: Chroma,
-                         query: str,
-                         k: int = 3) -> List[Document]:
+    def similarity_search(self, query: str, k: int = 3):
         """
         Perform similarity search on vector store.
-        
-        Args:
-            vectorstore: Vector store to search
-            query: Search query
-            k: Number of results to return
-            
-        Returns:
-            List[Document]: List of relevant documents
         """
-        return vectorstore.similarity_search(query, k=k)
+        print("\nDebug: Starting similarity search")
+        print(f"Query: {query}")
+        print(f"Looking for {k} documents")
+        
+        # Get query embedding
+        query_embedding = self.embeddings.embed_query(query)
+        print("Query embedding created")
+        
+        # Search
+        results = self.collection.search(
+            query_embeddings=query_embedding,
+            n_results=k
+        )
+        print(f"Search complete. Found {len(results)} results")
+        
+        return results
