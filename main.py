@@ -60,8 +60,8 @@ def main():
                 
             print("\nProcessing your query...")
             
-            # Use vectorstore directly for search
-            relevant_docs = vectorstore.similarity_search(query, k=3)
+            # Get relevant docs using the manager
+            relevant_docs = vector_manager.similarity_search(query, k=3)
             
             # Debug print
             print(f"\nFound {len(relevant_docs)} relevant documents")
