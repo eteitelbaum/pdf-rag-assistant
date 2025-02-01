@@ -23,6 +23,11 @@ class HuggingFaceEmbeddings:
             embeddings = outputs.last_hidden_state[:, 0, :].cpu().numpy()
         
         return embeddings
+        
+    def embed_query(self, text: str):
+        """Embed a single piece of text (the query)"""
+        # Convert single text to list for processing
+        return self.embed_documents([text])[0]
 
 class VectorStoreManager:
     """Manages vector database operations and embeddings"""
