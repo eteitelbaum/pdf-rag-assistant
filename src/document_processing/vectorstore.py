@@ -85,16 +85,18 @@ class VectorStoreManager:
         return self.initialize_vectorstore(documents)
     
     def similarity_search(self, 
+                         vectorstore: Chroma,
                          query: str,
                          k: int = 3) -> List[Document]:
         """
         Perform similarity search on vector store.
         
         Args:
+            vectorstore: Vector store to search
             query: Search query
             k: Number of results to return
             
         Returns:
             List[Document]: List of relevant documents
         """
-        return self.vectorstore.similarity_search(query, k=k)
+        return vectorstore.similarity_search(query, k=k)
