@@ -16,6 +16,10 @@ class HuggingFaceEmbeddings:
         self.model = AutoModel.from_pretrained(model_name)
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model.to(self.device)
+        
+        # Add padding token if it doesn't exist
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
     
     def embed_documents(self, texts):
         # Tokenize and encode
@@ -151,41 +155,40 @@ class VectorStoreManager:
         Perform similarity search on vector store.
         """
         print("\nDebug: Starting similarity search")
-        print(f"Query: {query}")
-        print(f"Looking for {k} documents")
-        
         try:
-            # Load the vectorstore
             vectorstore = Chroma(
                 persist_directory=self.persist_directory,
                 embedding_function=self.embeddings
             )
             
-            # Perform the search
             results = vectorstore.similarity_search(query, k=k)
-            print(f"Search complete. Found {len(results)} results")
+            print(f"\nDebug: Found {len(results)} results")
             
-            # Debug information
-            if results:
-                print(f"First result type: {type(results[0])}")
-                print(f"First result attributes: {dir(results[0])}")
-            
-            # Extract the text content from the documents
-            formatted_results = []
+            # Debug information about results
             for i, doc in enumerate(results):
-                try:
-                    # Direct access to page_content
-                    formatted_results.append(doc.page_content)
-                except AttributeError as e:
-                    print(f"Warning: Could not process document {i}:")
-                    print(f"Document type: {type(doc)}")
-                    print(f"Document content: {doc}")
-                    print(f"Error: {e}")
+                print(f"\nDocument {i} type: {type(doc)}")
+                print(f"Document {i} attributes: {dir(doc)}")
+                print(f"Document {i} metadata: {getattr(doc, 'metadata', 'No metadata')}")
             
+            # Extract text content directly
+            formatted_results = []
+            for doc in results:
+                try:
+                    if hasattr(doc, 'page_content'):
+                        formatted_results.append(doc.page_content)
+                        print(f"\nSuccessfully extracted content from document")
+                    else:
+                        print(f"\nDocument missing page_content: {type(doc)}")
+                except Exception as e:
+                    print(f"\nError processing document: {e}")
+            
+            if not formatted_results:
+                print("\nWarning: No valid documents found in search results")
+                
             return formatted_results
             
         except Exception as e:
-            print(f"Error in similarity search: {e}")
+            print(f"\nError in similarity search: {e}")
             return []
 
 def get_pdf_hash(pdf_path):
