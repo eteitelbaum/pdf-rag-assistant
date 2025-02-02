@@ -143,3 +143,23 @@ class VectorStoreManager:
         print(f"Search complete. Found {len(results)} results")
         
         return results
+
+def get_vectorstore(documents=None):
+    vectorstore = None
+    try:
+        # Clear existing database
+        print("\nClearing existing vector database...")
+        if os.path.exists(PERSIST_DIRECTORY):
+            vectorstore = Chroma(persist_directory=PERSIST_DIRECTORY, embedding_function=embeddings)
+            vectorstore.delete_collection()
+            vectorstore = None
+        
+        # Create new vectorstore if we have documents
+        if documents:
+            print(f"\nProcessing {len(documents)} documents in batches...")
+            vectorstore = process_documents_in_batches(documents)
+            
+    except Exception as e:
+        print(f"Error initializing vector store: {e}")
+        
+    return vectorstore
