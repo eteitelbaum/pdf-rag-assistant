@@ -101,9 +101,9 @@ class VectorStoreManager:
             doc_count = vectorstore._collection.count()
             print(f"Found {doc_count} documents in database")
             
-            if doc_count == 0 and documents:
+            if documents:
                 print(f"\nProcessing {len(documents)} documents in batches...")
-                batch_size = 32  # Start with standard batch size
+                batch_size = 32
                 total_batches = (len(documents) - 1) // batch_size + 1
                 
                 for i in range(0, len(documents), batch_size):
@@ -114,14 +114,9 @@ class VectorStoreManager:
                         print(f"Current document count: {vectorstore._collection.count()}")
                     except Exception as e:
                         print(f"Error in batch {i//batch_size + 1}: {e}")
-                        # If batch fails, we can:
-                        # 1. Try smaller batch
-                        # 2. Try one-by-one
-                        # 3. Skip to next batch
                 
                 final_count = vectorstore._collection.count()
                 print(f"\nFinished processing. Total documents: {final_count}")
-                return vectorstore
             
             return vectorstore
         
