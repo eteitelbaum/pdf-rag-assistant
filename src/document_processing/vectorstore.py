@@ -134,18 +134,30 @@ class VectorStoreManager:
         print(f"Query: {query}")
         print(f"Looking for {k} documents")
         
-        # Get query embedding
-        query_embedding = self.embeddings.embed_query(query)
-        print("Query embedding created")
-        
-        # Search
-        results = self.collection.search(
-            query_embeddings=query_embedding,
-            n_results=k
-        )
-        print(f"Search complete. Found {len(results)} results")
-        
-        return results
+        try:
+            # Load the vectorstore
+            vectorstore = Chroma(
+                persist_directory=self.persist_directory,
+                embedding_function=self.embeddings
+            )
+            
+            # Perform the search directly using Chroma's similarity_search
+            results = vectorstore.similarity_search(query, k=k)
+            print(f"Search complete. Found {len(results)} results")
+            
+            # Extract and format the content from the documents
+            formatted_results = []
+            for doc in results:
+                if hasattr(doc, 'page_content'):
+                    formatted_results.append(doc.page_content)
+                else:
+                    print(f"Warning: Document has unexpected format: {type(doc)}")
+            
+            return formatted_results
+            
+        except Exception as e:
+            print(f"Error in similarity search: {e}")
+            return []
 
 def get_pdf_hash(pdf_path):
     """Generate a hash for a PDF file to track uniqueness"""
