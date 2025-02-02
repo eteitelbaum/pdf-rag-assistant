@@ -78,15 +78,5 @@ def main():
     except Exception as e:
         print(f"Error: {str(e)}")
 
-def print_metrics(result, resources):
-    try:
-        print("\nPerformance Metrics:")
-        print(f"Time taken: {result.get('duration_seconds', 0):.2f} seconds")
-        print(f"Memory used: {float(resources.get('memory_used_mb', 0)):.1f} MB")
-        print(f"Memory usage: {float(resources.get('memory_percent', 0)):.1f}%")
-        print(f"CPU usage: {float(resources.get('cpu_percent', 0)):.1f}%")
-    except Exception as e:
-        print(f"Error displaying metrics: {str(e)}")
-
 if __name__ == "__main__":
     exit(main())

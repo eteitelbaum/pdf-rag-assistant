@@ -41,6 +41,7 @@ class MetricsTracker:
         """Initialize the metrics tracker and create storage directory."""
         self.results_dir = "model_comparisons"
         os.makedirs(self.results_dir, exist_ok=True)
+        self.results = []  # Store results in memory for quick access
         
     def track_query(self, model_name: str, query: str, func):
         """
@@ -80,6 +81,7 @@ class MetricsTracker:
                 "success": False
             }
         
+        self.results.append(result)  # Store in memory
         self._save_result(result)
         return result
     
@@ -163,3 +165,25 @@ class MetricsTracker:
             "memory_available_gb": psutil.virtual_memory().available / 1024 / 1024 / 1024,  # GB
             "cpu_count": psutil.cpu_count()
         }
+        
+    def print_metrics(self):
+        """Print the metrics for the most recent query."""
+        try:
+            if not self.results:
+                print("\nNo metrics available - no queries have been processed yet.")
+                return
+                
+            resources = self.track_system_resources()
+            latest_result = self.results[-1]  # Get most recent result
+            
+            print("\nPerformance Metrics:")
+            print(f"Time taken: {latest_result.get('duration_seconds', 0):.2f} seconds")
+            print(f"Memory used: {float(resources.get('memory_used_mb', 0)):.1f} MB")
+            print(f"Memory usage: {float(resources.get('memory_percent', 0)):.1f}%")
+            print(f"CPU usage: {float(resources.get('cpu_percent', 0)):.1f}%")
+            
+            if latest_result.get('estimated_cost_usd', 0) > 0:
+                print(f"Estimated cost: ${latest_result.get('estimated_cost_usd', 0):.4f}")
+                
+        except Exception as e:
+            print(f"Error displaying metrics: {str(e)}")

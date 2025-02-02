@@ -48,6 +48,10 @@ class LLMRouter:
             
             print("\nStep 1: Initializing tokenizer...")
             _GLOBAL_TOKENIZER = AutoTokenizer.from_pretrained(model_path)
+            # Explicitly set padding token for Mistral
+            if _GLOBAL_TOKENIZER.pad_token is None:
+                _GLOBAL_TOKENIZER.pad_token = _GLOBAL_TOKENIZER.eos_token
+                _GLOBAL_TOKENIZER.pad_token_id = _GLOBAL_TOKENIZER.eos_token_id
             print("Tokenizer initialized successfully")
             
             print("\nStep 2: Loading model...")
