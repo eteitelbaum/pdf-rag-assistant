@@ -27,7 +27,7 @@ class PDFProcessor:
     
     def load_pdfs(self, pdf_directory: str) -> List[Document]:
         """
-        Load and process PDF documents with progress tracking.
+        Load all PDFs from a directory.
         
         Args:
             pdf_directory: Path to directory containing PDFs
@@ -41,8 +41,22 @@ class PDFProcessor:
         if not pdf_files:
             raise ValueError(f"No PDF files found in {pdf_directory}")
         
-        print("\nLoading PDFs:")
-        for filename in tqdm(pdf_files, desc="Processing PDFs", unit="file"):
+        # Load list of previously processed files
+        processed_files_path = os.path.join(pdf_directory, '.processed_files')
+        processed_files = set()
+        if os.path.exists(processed_files_path):
+            with open(processed_files_path, 'r') as f:
+                processed_files = set(f.read().splitlines())
+        
+        # Filter for only new PDFs
+        new_pdfs = [f for f in pdf_files if f not in processed_files]
+        
+        if not new_pdfs:
+            print("\nNo new PDFs to process.")
+            return []
+            
+        print(f"\nLoading {len(new_pdfs)} new PDFs:")
+        for filename in tqdm(new_pdfs, desc="Processing PDFs", unit="file"):
             file_path = os.path.join(pdf_directory, filename)
             try:
                 loader = PyPDFLoader(file_path)
@@ -51,9 +65,15 @@ class PDFProcessor:
                 for doc in docs:
                     doc.metadata['source'] = filename
                 documents.extend(docs)
+                # Add to processed files
+                processed_files.add(filename)
             except Exception as e:
                 print(f"\nError loading {filename}: {e}", file=sys.stderr)
                 continue
+        
+        # Save updated processed files list
+        with open(processed_files_path, 'w') as f:
+            f.write('\n'.join(processed_files))
         
         return documents
     

@@ -94,20 +94,33 @@ class VectorStoreManager:
         except Exception:
             return None
     
-    def get_or_create_vectorstore(self, documents: Optional[List[Document]] = None):
+    def process_documents(self, documents: List[Document]) -> Chroma:
+        """
+        Process documents and add to vector store.
+        """
+        # Check if database already exists
         if os.path.exists(self.persist_directory):
-            print("\nChecking existing vector database...")
+            print("\nFound existing vector database")
+            
+            if not documents:
+                print("No new documents to process. Using existing database.")
+                return Chroma(
+                    persist_directory=self.persist_directory,
+                    embedding_function=self.embeddings
+                )
+            
+            print(f"Found {len(documents)} documents to process")
+            
+            # Load existing vectorstore
             vectorstore = Chroma(
                 persist_directory=self.persist_directory,
                 embedding_function=self.embeddings
             )
-            doc_count = vectorstore._collection.count()
-            print(f"Found {doc_count} documents in database")
             
+            # Process documents in batches
             if documents:
-                print(f"\nProcessing {len(documents)} documents in batches...")
                 batch_size = 32
-                total_batches = (len(documents) - 1) // batch_size + 1
+                total_batches = (len(documents) + batch_size - 1) // batch_size
                 
                 for i in range(0, len(documents), batch_size):
                     batch = documents[i:i + batch_size]
@@ -145,15 +158,22 @@ class VectorStoreManager:
             results = vectorstore.similarity_search(query, k=k)
             print(f"Search complete. Found {len(results)} results")
             
+            # Debug information
+            if results:
+                print(f"First result type: {type(results[0])}")
+                print(f"First result attributes: {dir(results[0])}")
+            
             # Extract the text content from the documents
             formatted_results = []
-            for doc in results:
-                if isinstance(doc, Document):  # Check if it's a LangChain Document
+            for i, doc in enumerate(results):
+                try:
+                    # Direct access to page_content
                     formatted_results.append(doc.page_content)
-                elif hasattr(doc, 'page_content'):  # Backup check for page_content attribute
-                    formatted_results.append(doc.page_content)
-                else:
-                    print(f"Warning: Document has unexpected format: {type(doc)}")
+                except AttributeError as e:
+                    print(f"Warning: Could not process document {i}:")
+                    print(f"Document type: {type(doc)}")
+                    print(f"Document content: {doc}")
+                    print(f"Error: {e}")
             
             return formatted_results
             
@@ -206,12 +226,15 @@ def get_vectorstore(pdf_paths=None):
                 documents = load_pdfs(new_pdfs)
                 chunks = split_documents(documents)
                 print(f"Processing {len(chunks)} new chunks...")
+                # Clear existing vectorstore before adding new documents
+                vectorstore = Chroma(embedding_function=embeddings, persist_directory=db_path)
                 vectorstore = process_documents_in_batches(chunks, existing_vectorstore=vectorstore)
                 
                 # Save record of processed files
                 save_processed_files(processed_files)
             else:
                 print("\nNo new PDFs to process. Using existing embeddings.")
+                vectorstore = Chroma(embedding_function=embeddings, persist_directory=db_path)
                 
         return vectorstore
             
