@@ -10,6 +10,10 @@ import os
 from metrics_tracker import MetricsTracker
 import psutil
 
+# Global variables to cache model and tokenizer
+_GLOBAL_MODEL = None
+_GLOBAL_TOKENIZER = None
+
 class LLMRouter:
     """Handles LLM initialization and routing"""
     
@@ -30,52 +34,34 @@ class LLMRouter:
                 print(f"HuggingFace Error: {e.response.text}")
             return False
     
-    def __init__(self, llm_type="local", llm_name="mistralai/Mistral-7B-Instruct-v0.3"):
-        load_dotenv()
+    def __init__(self, model_path: str = "mistralai/Mistral-7B-Instruct-v0.3"):
+        """Initialize LLM Router with in-memory caching."""
+        global _GLOBAL_MODEL, _GLOBAL_TOKENIZER
+        
+        self.model_path = model_path
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        print(f"Using device: {self.device}")
         
-        # Verify token before initializing model
-        if not self._verify_hf_token():
-            raise ValueError("Invalid or missing HuggingFace token")
-        
-        # Initialize model with explicit truncation settings
-        self.model, self.tokenizer = self._initialize_llm(llm_type, llm_name)
-    
-    def _initialize_llm(self, llm_type="local", llm_name="mistralai/Mistral-7B-Instruct-v0.3"):
-        print(f"Attempting to load model: {llm_name}")
-        print(f"Using device: {self.device}")
-        
-        try:
-            hf_token = os.getenv('HUGGINGFACEHUB_API_TOKEN')
+        # Check if model is already loaded in memory
+        if _GLOBAL_MODEL is None or _GLOBAL_TOKENIZER is None:
+            print(f"Using device: {self.device}")
+            print(f"Attempting to load model: {model_path}")
             
-            # Initialize tokenizer
             print("\nStep 1: Initializing tokenizer...")
-            tokenizer = AutoTokenizer.from_pretrained(
-                llm_name,
-                token=hf_token
-            )
-            # Set padding token
-            tokenizer.pad_token = tokenizer.eos_token
+            _GLOBAL_TOKENIZER = AutoTokenizer.from_pretrained(model_path)
             print("Tokenizer initialized successfully")
             
-            # Initialize model
             print("\nStep 2: Loading model...")
-            model = AutoModelForCausalLM.from_pretrained(
-                llm_name,
-                device_map="auto",
+            _GLOBAL_MODEL = AutoModelForCausalLM.from_pretrained(
+                model_path,
                 torch_dtype=torch.float16,
-                token=hf_token
+                device_map="auto"
             )
             print("Model loaded successfully")
+        else:
+            print("Using already loaded model and tokenizer")
             
-            return model, tokenizer
-            
-        except Exception as e:
-            print(f"\nDetailed error information:")
-            print(f"Error type: {type(e).__name__}")
-            print(f"Error message: {str(e)}")
-            raise ValueError(f"Error initializing model: {str(e)}")
+        self.model = _GLOBAL_MODEL
+        self.tokenizer = _GLOBAL_TOKENIZER
     
     def generate_response(self, query, relevant_docs):
         try:
