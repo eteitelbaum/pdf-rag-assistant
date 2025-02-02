@@ -102,13 +102,26 @@ class VectorStoreManager:
             print(f"Found {doc_count} documents in database")
             
             if doc_count == 0 and documents:
-                print("\nCreating new embeddings...")
-                # Force new creation with documents
-                return Chroma.from_documents(
-                    documents=documents,
-                    embedding_function=self.embeddings,
-                    persist_directory=self.persist_directory
-                )
+                print(f"\nProcessing {len(documents)} documents in batches...")
+                batch_size = 32  # Start with standard batch size
+                total_batches = (len(documents) - 1) // batch_size + 1
+                
+                for i in range(0, len(documents), batch_size):
+                    batch = documents[i:i + batch_size]
+                    try:
+                        print(f"\nProcessing batch {i//batch_size + 1}/{total_batches}")
+                        vectorstore.add_texts([doc.page_content for doc in batch])
+                        print(f"Current document count: {vectorstore._collection.count()}")
+                    except Exception as e:
+                        print(f"Error in batch {i//batch_size + 1}: {e}")
+                        # If batch fails, we can:
+                        # 1. Try smaller batch
+                        # 2. Try one-by-one
+                        # 3. Skip to next batch
+                
+                final_count = vectorstore._collection.count()
+                print(f"\nFinished processing. Total documents: {final_count}")
+                return vectorstore
             
             return vectorstore
         
