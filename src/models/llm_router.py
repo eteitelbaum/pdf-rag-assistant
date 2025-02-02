@@ -76,8 +76,8 @@ class LLMRouter:
             for doc in relevant_docs:
                 if isinstance(doc, str):
                     doc_texts.append(doc)
-                elif hasattr(doc, 'content'):
-                    doc_texts.append(doc.content)
+                elif hasattr(doc, 'page_content'):
+                    doc_texts.append(doc.page_content)
                 else:
                     print(f"Warning: Skipping document with unexpected format: {type(doc)}")
             
