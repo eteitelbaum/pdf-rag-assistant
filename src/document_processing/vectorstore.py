@@ -93,16 +93,22 @@ class VectorStoreManager:
     
     def get_or_create_vectorstore(self, documents: Optional[List[Document]] = None):
         if os.path.exists(self.persist_directory):
-            print("\nLoading existing vector database...")
+            print("\nChecking existing vector database...")
             vectorstore = Chroma(
                 persist_directory=self.persist_directory,
                 embedding_function=self.embeddings
             )
-            # Verify database content
             doc_count = vectorstore._collection.count()
-            print("\nVerifying vector database:")
-            print(f"Database location: {self.persist_directory}")
-            print(f"Number of documents: {doc_count}")
+            print(f"Found {doc_count} documents in database")
+            
+            if doc_count == 0 and documents:
+                print("\nCreating new embeddings...")
+                # Force new creation with documents
+                return Chroma.from_documents(
+                    documents=documents,
+                    embedding_function=self.embeddings,
+                    persist_directory=self.persist_directory
+                )
             
             return vectorstore
         
