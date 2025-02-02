@@ -141,14 +141,16 @@ class VectorStoreManager:
                 embedding_function=self.embeddings
             )
             
-            # Perform the search directly using Chroma's similarity_search
+            # Perform the search
             results = vectorstore.similarity_search(query, k=k)
             print(f"Search complete. Found {len(results)} results")
             
-            # Extract and format the content from the documents
+            # Extract the text content from the documents
             formatted_results = []
             for doc in results:
-                if hasattr(doc, 'page_content'):
+                if isinstance(doc, Document):  # Check if it's a LangChain Document
+                    formatted_results.append(doc.page_content)
+                elif hasattr(doc, 'page_content'):  # Backup check for page_content attribute
                     formatted_results.append(doc.page_content)
                 else:
                     print(f"Warning: Document has unexpected format: {type(doc)}")
