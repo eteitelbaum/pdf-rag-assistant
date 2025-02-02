@@ -6,6 +6,9 @@ from transformers import AutoTokenizer, AutoModel
 import torch
 import numpy as np
 import os
+import hashlib
+import json
+from datetime import datetime
 
 class HuggingFaceEmbeddings:
     def __init__(self, model_name="BAAI/bge-large-en-v1.5"):
@@ -144,22 +147,60 @@ class VectorStoreManager:
         
         return results
 
-def get_vectorstore(documents=None):
-    vectorstore = None
+def get_pdf_hash(pdf_path):
+    """Generate a hash for a PDF file to track uniqueness"""
+    with open(pdf_path, 'rb') as file:
+        return hashlib.md5(file.read()).hexdigest()
+
+def load_processed_files():
+    """Load record of previously processed files"""
+    tracking_file = os.path.join(PERSIST_DIRECTORY, 'processed_files.json')
+    if os.path.exists(tracking_file):
+        with open(tracking_file, 'r') as f:
+            return json.load(f)
+    return {}
+
+def save_processed_files(processed):
+    """Save record of processed files"""
+    tracking_file = os.path.join(PERSIST_DIRECTORY, 'processed_files.json')
+    with open(tracking_file, 'w') as f:
+        json.dump(processed, f)
+
+def get_vectorstore(pdf_paths=None):
     try:
-        # Clear existing database
-        print("\nClearing existing vector database...")
-        if os.path.exists(PERSIST_DIRECTORY):
-            vectorstore = Chroma(persist_directory=PERSIST_DIRECTORY, embedding_function=embeddings)
-            vectorstore.delete_collection()
-            vectorstore = None
+        # Initialize or load existing vectorstore
+        vectorstore = Chroma(persist_directory=PERSIST_DIRECTORY, embedding_function=embeddings)
         
-        # Create new vectorstore if we have documents
-        if documents:
-            print(f"\nProcessing {len(documents)} documents in batches...")
-            vectorstore = process_documents_in_batches(documents)
+        if pdf_paths:
+            # Load record of processed files
+            processed_files = load_processed_files()
+            new_pdfs = []
+            
+            # Check for new PDFs
+            for pdf_path in pdf_paths:
+                pdf_hash = get_pdf_hash(pdf_path)
+                if pdf_hash not in processed_files:
+                    new_pdfs.append(pdf_path)
+                    processed_files[pdf_hash] = {
+                        'path': pdf_path,
+                        'processed_date': str(datetime.now())
+                    }
+            
+            # Process only new PDFs
+            if new_pdfs:
+                print(f"\nFound {len(new_pdfs)} new PDFs to process...")
+                documents = load_pdfs(new_pdfs)
+                chunks = split_documents(documents)
+                print(f"Processing {len(chunks)} new chunks...")
+                vectorstore = process_documents_in_batches(chunks, existing_vectorstore=vectorstore)
+                
+                # Save record of processed files
+                save_processed_files(processed_files)
+            else:
+                print("\nNo new PDFs to process. Using existing embeddings.")
+                
+        return vectorstore
             
     except Exception as e:
         print(f"Error initializing vector store: {e}")
-        
-    return vectorstore
+        return None
