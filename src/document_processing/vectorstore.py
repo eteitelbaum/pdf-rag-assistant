@@ -94,6 +94,13 @@ class VectorStoreManager:
         except Exception:
             return None
     
+    def get_or_create_vectorstore(self, documents: List[Document]) -> Chroma:
+        """
+        Get existing vectorstore or create new one if it doesn't exist.
+        This is a wrapper around process_documents for backward compatibility.
+        """
+        return self.process_documents(documents)
+    
     def process_documents(self, documents: List[Document]) -> Chroma:
         """
         Process documents and add to vector store.
