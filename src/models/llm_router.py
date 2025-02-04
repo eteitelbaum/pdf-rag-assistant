@@ -4,7 +4,7 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from langchain_community.chat_models import ChatOpenAI, ChatAnthropic
 from langchain_community.llms import HuggingFacePipeline
-from huggingface_hub import HfApi
+from huggingface_hub import HfApi, login
 from huggingface_hub.utils import HfHubHTTPError
 import os
 from metrics_tracker import MetricsTracker
@@ -20,24 +20,33 @@ class LLMRouter:
     def _verify_hf_token(self):
         """Verify HuggingFace token is valid."""
         try:
-            token = os.getenv('HUGGINGFACEHUB_API_TOKEN')
+            token = os.getenv('HUGGINGFACE_TOKEN') or os.getenv('HUGGINGFACEHUB_API_TOKEN')
             if not token:
-                raise ValueError("No HuggingFace token found in environment")
+                raise ValueError("No HuggingFace token found in environment variables")
+            
+            # Set token for huggingface_hub
+            login(token)
+            
+            # Verify token works
             api = HfApi(token=token)
             api.whoami()
             return True
         except Exception as e:
-            print("\nError: Invalid HuggingFace token")
-            print("Please check your .env file contains a valid token:")
-            print("HUGGINGFACEHUB_API_TOKEN=your-token-here")
-            if isinstance(e, HfHubHTTPError):
-                print(f"HuggingFace Error: {e.response.text}")
+            print("\nError: HuggingFace token verification failed")
+            print("Please ensure you have:")
+            print("1. Set HUGGINGFACE_TOKEN or HUGGINGFACEHUB_API_TOKEN in your environment")
+            print("2. Accepted the model terms at https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3")
+            print(f"\nDetailed error: {str(e)}")
             return False
     
     def __init__(self, model_path: str = "mistralai/Mistral-7B-Instruct-v0.3"):
         """Initialize LLM Router with in-memory caching."""
         global _GLOBAL_MODEL, _GLOBAL_TOKENIZER
         
+        # Verify token before attempting to load model
+        if not self._verify_hf_token():
+            raise ValueError("HuggingFace token verification failed")
+            
         self.model_path = model_path
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         
