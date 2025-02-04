@@ -111,7 +111,7 @@ class VectorStoreManager:
                 
                 vectorstore = Chroma.from_documents(
                     documents=documents,
-                    embedding=self.embeddings,
+                    embedding_function=self.embeddings,
                     persist_directory=self.persist_directory,
                     progress_callback=progress_callback
                 )
