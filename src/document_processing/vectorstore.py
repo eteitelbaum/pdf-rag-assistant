@@ -148,7 +148,7 @@ class VectorStoreManager:
             vectorstore = self.load_existing_vectorstore()
             
             if documents:
-                batch_size = 32
+                batch_size = 64
                 total_batches = (len(documents) + batch_size - 1) // batch_size
                 
                 for i in range(0, len(documents), batch_size):

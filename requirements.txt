@@ -28,7 +28,7 @@ anthropic>=0.41.0
 # Utilities
 pandas==2.2.2
 psutil==5.9.8
-tqdm==4.66.2
+tqdm==4.66.3
 scholarly==1.7.11
 
 # Optional integrations (commented out)
