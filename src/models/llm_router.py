@@ -59,8 +59,8 @@ class LLMRouter:
                 model_path,
                 torch_dtype=torch.float16,
                 device_map="auto",
-                load_in_4bit=True,
-                bnb_4bit_compute_dtype=torch.bfloat16
+                #load_in_4bit=True,
+                #bnb_4bit_compute_dtype=torch.bfloat16
             )
             print("Model loaded successfully")
         else:
