@@ -1,7 +1,7 @@
 from typing import List, Optional
 from tqdm import tqdm
 from langchain.schema import Document
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from transformers import AutoTokenizer, AutoModel
 import torch
 import numpy as np
